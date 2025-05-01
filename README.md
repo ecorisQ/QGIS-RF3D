@@ -3,3 +3,10 @@ Based on a digital elevation model (DEM) and a polygon or line input (terrain / 
 The tool includes internal checks for invalid or missing geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model. The user is informed if any values fall outside expected ranges or if data types do not match. 
 
 For the ROCKDENSITY raster, the tool performs an additional check to identify values in the two outer rows or columns of the raster, which will not be considered in the Rockyfor3D simulation.
+
+For installing this Plugin:
+1. Save the zipped(!) code folder somewhere on your computer.
+2. Open QGIS, go to Plugins > Manage and Install Plugins > Install from ZIP.
+3. Click on the 3 dots, browse to the zipped folder and then click on Install Plugin.
+
+The plugin ("Create Rockyfor3D Input Rasters") is available from the plugin menu, the processing toolbox or directly from the toolbar.
