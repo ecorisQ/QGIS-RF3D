@@ -1,4 +1,4 @@
-Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), the algorithm rasterizes the attributes from the vector layer, ensuring alignment of all output rasters with the DEM grid, and the correct output format of all data (ASCII grid). 
+Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), this plugin rasterizes the attributes from the vector layer, ensuring alignment of all output rasters with the DEM grid, and the correct output format of all data (ASCII grid). 
 
 The tool includes internal checks for invalid or missing geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model. The user is informed if any values fall outside expected ranges or if data types do not match. 
 
