@@ -6,7 +6,7 @@
 name=Rockyfor3D Input Rasters
 qgisMinimumVersion=3.0
 description=This plugin prepares the input rasters for the Rockyfor3D rockfall simulation model.
-version=0.1
+version=0.2
 author=Alexandra Erbach
 email=a.erbach@posteo.de
 
