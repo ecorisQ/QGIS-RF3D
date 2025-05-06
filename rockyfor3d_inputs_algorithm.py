@@ -74,7 +74,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
 
         field_constraints = {
             "ROCKDENSITY": {"min": 2000, "max": 3000, "type": "Integer"},
-            "BLSHAPE": {"min": 1, "max": 4, "type": "Integer"},
+            "BLSHAPE": {"min": 0, "max": 4, "type": "Integer"},
             "SOILTYPE": {"min": 0, "max": 7, "type": "Integer"},
             "RG10": {"min": 0, "max": 100, "type": "Real"},
             "RG20": {"min": 0, "max": 100, "type": "Real"},
@@ -108,7 +108,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         for feature in layer.getFeatures():
             geom = feature.geometry()
             if not geom.isGeosValid():
-                ids_invalid_geom.append(feature.id())
+                ids_invalid_geom.append(str(feature.id()))
         if ids_invalid_geom:
             feedback.pushWarning(f"❌ WARNING: Feature(s) ({', '.join(ids_invalid_geom)}) of vector layer with invalid geometry. Please verify if the output rasters are correct and otherwise fix your input data.")
 
@@ -193,10 +193,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 else:
                     warnings.append(f"{null_count} NULL values were found")
                                         
-            # check on problems with field type and value range
-            # check values/value range, continue with warning at the end: rockdensity int 2000-3000, blshape 1-4 (int), soil type int 0-7, roughness 0-100, bhd_mean 0-2, bhd_stv 0-1, corniferous int 0-100, ntrees int 0-10000, net_number int 0-999, net_energy 0-20000 int, net_height 0-15 float
+            # check on problems with field type and value range, continue with warnings at the end
             out_of_range = 0
-            dtype = False
             
             if field in field_constraints:
                 min_val = field_constraints[field]["min"]
@@ -209,9 +207,13 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 for feature in layer.getFeatures():
                     value = feature[field]
 
-                    if value is not None:
+                    if value is not None and field != "ROCKDENSITY":
                         if (min_val is not None and value < min_val) or (max_val is not None and value > max_val):
-                            out_of_range += 1
+                            out_of_range +=1
+                    
+                    if value is not None and field == "ROCKDENSITY":
+                        if (min_val is not None and value < min_val and value!=0) or (max_val is not None and value > max_val):
+                            out_of_range +=1                                                  
                         
                 if out_of_range > 0:
                     warnings.append(f"{out_of_range} value(s) outside the expected range ({min_val}–{max_val})")
@@ -255,10 +257,10 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 'DATA_TYPE': gdal_type+1,
                 'INPUT': warped['OUTPUT'],
                 'NODATA': nodata_value,
+                'EXTRA':'-co DECIMAL_PRECISION=2',
                 'OUTPUT': out_path
             }, context=context, feedback=feedback, is_child_algorithm=True)
             
-            # check precision, limit to 2??? (float rasters)
             # check if rockdensity cells in the outer 2 rows
             if field == "ROCKDENSITY":
                 rock_raster = QgsRasterLayer(out_path, field)
