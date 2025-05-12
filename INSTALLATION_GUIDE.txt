@@ -1,6 +1,0 @@
-For installing this Plugin:
-1. Save the zipped(!) folder somewhere on your computer.
-2. Open QGIS, go to Plugins > Manage and Install Plugins > Install from ZIP.
-3. Click on the 3 dots, browse to the zipped folder and then click on Install Plugin.
-
-The plugin ("Create Rockyfor3D Input Rasters") is available from the plugin menu, the processing toolbox or directly from the toolbar.
