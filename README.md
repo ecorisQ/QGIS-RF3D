@@ -5,11 +5,8 @@ The tool includes internal checks for invalid geometries, mismatched coordinate 
 The tool performs an additional check to identify values in the two outer rows or columns of the ROCKDENSITY raster, which will not be considered in the Rockyfor3D simulation.
 
 ### Installation
-1. Save the zipped(!) code folder somewhere on your computer.
-2. Open QGIS, go to Plugins > Manage and Install Plugins > Install from ZIP.
-3. Click on the 3 dots, browse to the zipped folder and then click on Install Plugin.
-
-The plugin ("Create Rockyfor3D Input Rasters") is available in QGIS from the plugin menu, the processing toolbox or directly from the toolbar.
+The plugin ("Rockyfor3D Input Rasters") is available in the official QGIS Plugin repository and can be installed in QGIS via Plugins > Manage and Install Plugins.
+Once installed, the plugin is accessible in QGIS from the plugin menu, the processing toolbox or directly from the toolbar.
 
 ### Get Rockyfor3D (free for ecorisQ members)
 https://www.ecorisq.org/ecorisq-tools
