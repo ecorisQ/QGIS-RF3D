@@ -197,7 +197,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             # check on problems with field type and value range, continue with warnings at the end
             out_of_range = 0
 
-            if field.lower in field_constraints:
+            if field.lower() in field_constraints:
                 min_val = field_constraints[field]["min"]
                 max_val = field_constraints[field]["max"]
                 expected_type = field_constraints[field]["type"]
@@ -208,11 +208,11 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 for feature in layer.getFeatures():
                     value = feature[field]
 
-                    if value is not None and (field.lower != "rockdensity" and field.lower != "rockdensit"):
+                    if value is not None and (field.lower() != "rockdensity" and field.lower() != "rockdensit"):
                         if (min_val is not None and value < min_val) or (max_val is not None and value > max_val):
                             out_of_range +=1
                     
-                    if value is not None and (field.lower == "rockdensity" or field.lower == "rockdensit"):
+                    if value is not None and (field.lower() == "rockdensity" or field.lower() == "rockdensit"):
                         if (min_val is not None and value < min_val and value!=0) or (max_val is not None and value > max_val):
                             out_of_range +=1                                                  
                         
@@ -254,7 +254,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
 
             # translate to .asc
             out_path = os.path.join(output_folder, f"{field}.asc")
-            if field.lower == "rockdensit":
+            if field.lower() == "rockdensit":
                 out_path = os.path.join(output_folder, "rockdensity.asc")
             processing.run('gdal:translate', {
                 'DATA_TYPE': gdal_type+1,
@@ -265,7 +265,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             }, context=context, feedback=feedback, is_child_algorithm=True)
             
             # check if rockdensity cells in the outer 2 rows
-            if (field.lower == "rockdensity" or field.lower == "rockdensit"):
+            if (field.lower() == "rockdensity" or field.lower() == "rockdensit"):
                 rock_raster = QgsRasterLayer(out_path, "rockdensity")
                 if not rock_raster.isValid():
                     feedback.pushWarning(f"⚠️ WARNING: ROCKDENSITY raster is not valid and could not be loaded for edge check.")
