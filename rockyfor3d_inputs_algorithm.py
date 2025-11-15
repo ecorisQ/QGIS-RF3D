@@ -73,12 +73,13 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         nodata_value = -9999
 
         field_constraints = {
-            "ROCKDENSITY": {"min": 2000, "max": 3000, "type": "Integer"},
-            "BLSHAPE": {"min": 0, "max": 4, "type": "Integer"},
-            "SOILTYPE": {"min": 0, "max": 7, "type": "Integer"},
-            "RG10": {"min": 0, "max": 100, "type": "Real"},
-            "RG20": {"min": 0, "max": 100, "type": "Real"},
-            "RG70": {"min": 0, "max": 100, "type": "Real"},
+            "rockdensity": {"min": 2000, "max": 3000, "type": "Integer"},
+            "rockdensit": {"min": 2000, "max": 3000, "type": "Integer"},
+            "blshape": {"min": 0, "max": 4, "type": "Integer"},
+            "soiltype": {"min": 0, "max": 7, "type": "Integer"},
+            "rg10": {"min": 0, "max": 100, "type": "Real"},
+            "rg20": {"min": 0, "max": 100, "type": "Real"},
+            "rg70": {"min": 0, "max": 100, "type": "Real"},
             "net_number": {"min": 0, "max": 999, "type": "Integer"},
             "net_energy": {"min": 0, "max": 20000, "type": "Integer"},
             "net_height": {"min": 0, "max": 15, "type": "Real"},
@@ -162,7 +163,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 break
 
             warnings = []
-            
+
             # determine data type and choose GDAL code accordingly
             qgs_field = layer.fields().field(field)
             if qgs_field.typeName().lower().startswith('real'):
@@ -195,8 +196,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                                         
             # check on problems with field type and value range, continue with warnings at the end
             out_of_range = 0
-            
-            if field in field_constraints:
+
+            if field.lower in field_constraints:
                 min_val = field_constraints[field]["min"]
                 max_val = field_constraints[field]["max"]
                 expected_type = field_constraints[field]["type"]
@@ -207,11 +208,11 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 for feature in layer.getFeatures():
                     value = feature[field]
 
-                    if value is not None and field != "ROCKDENSITY":
+                    if value is not None and (field.lower != "rockdensity" and field.lower != "rockdensit"):
                         if (min_val is not None and value < min_val) or (max_val is not None and value > max_val):
                             out_of_range +=1
                     
-                    if value is not None and field == "ROCKDENSITY":
+                    if value is not None and (field.lower == "rockdensity" or field.lower == "rockdensit"):
                         if (min_val is not None and value < min_val and value!=0) or (max_val is not None and value > max_val):
                             out_of_range +=1                                                  
                         
@@ -253,6 +254,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
 
             # translate to .asc
             out_path = os.path.join(output_folder, f"{field}.asc")
+            if field.lower == "rockdensit":
+                out_path = os.path.join(output_folder, "rockdensity.asc")
             processing.run('gdal:translate', {
                 'DATA_TYPE': gdal_type+1,
                 'INPUT': warped['OUTPUT'],
@@ -262,8 +265,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             }, context=context, feedback=feedback, is_child_algorithm=True)
             
             # check if rockdensity cells in the outer 2 rows
-            if field == "ROCKDENSITY":
-                rock_raster = QgsRasterLayer(out_path, field)
+            if (field.lower == "rockdensity" or field.lower == "rockdensit"):
+                rock_raster = QgsRasterLayer(out_path, "rockdensity")
                 if not rock_raster.isValid():
                     feedback.pushWarning(f"⚠️ WARNING: ROCKDENSITY raster is not valid and could not be loaded for edge check.")
                 else:
