@@ -4,7 +4,7 @@ The tool includes internal checks for invalid geometries, mismatched coordinate 
 
 The tool performs an additional check to identify values in the two outer rows or columns of the ROCKDENSITY raster, which will not be considered in the Rockyfor3D simulation.
 
-A geopackage template for the terrain / forest / rockfall nets data can be downloaded under https://www.ecorisq.org/publications/various/117-rf3d-vector-templates/file.
+A geopackage template for terrain / forest / rockfall nets data can be downloaded [here](https://www.ecorisq.org/publications/various/117-rf3d-vector-templates/file).
 
 ### Installation
 The plugin ("Rockyfor3D Input Rasters") is available in the official QGIS Plugin repository and can be installed in QGIS via Plugins > Manage and Install Plugins.
