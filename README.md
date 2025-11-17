@@ -1,10 +1,8 @@
-This QGIS plugin facilitates the data preparation for the rockfall simulation model Rockyfor3D. Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), the plugin rasterizes the attributes from the vector layer, ensuring alignment of all output rasters with the DEM grid, and the correct output format of all data (ASCII grid). 
+This QGIS plugin facilitates the **data preparation for the rockfall simulation model Rockyfor3D**. Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), the plugin **rasterizes** the attributes from the vector layer, ensuring **alignment** of all output rasters with the DEM grid, and the **correct output format** of all data (ASCII grid). 
 
-The tool includes internal checks for invalid geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model. The user is informed if any values fall outside expected ranges or if data types do not match. 
+The tool includes **internal checks** for invalid geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model. The user is informed if any values fall outside expected ranges or if data types do not match. The tool performs an additional check to identify values in the two outer rows or columns of the ROCKDENSITY raster, which will not be considered in the Rockyfor3D simulation.
 
-The tool performs an additional check to identify values in the two outer rows or columns of the ROCKDENSITY raster, which will not be considered in the Rockyfor3D simulation.
-
-A geopackage template for terrain / forest / rockfall nets data can be downloaded [here](https://www.ecorisq.org/publications/various/117-rf3d-vector-templates/file).
+A geopackage **template for terrain / forest / rockfall nets data** can be downloaded [here](https://www.ecorisq.org/publications/various/117-rf3d-vector-templates/file).
 
 ### Installation
 The plugin ("Rockyfor3D Input Rasters") is available in the official QGIS Plugin repository and can be installed in QGIS via Plugins > Manage and Install Plugins.
