@@ -73,8 +73,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         nodata_value = -9999
 
         field_constraints = {
-            "rockdensity": {"min": 2000, "max": 3000, "type": "Integer"},
-            "rockdensit": {"min": 2000, "max": 3000, "type": "Integer"},
+            "rockdensity": {"min": 2000, "max": 3400, "type": "Integer"},
+            "rockdensit": {"min": 2000, "max": 3400, "type": "Integer"},
             "blshape": {"min": 0, "max": 4, "type": "Integer"},
             "soiltype": {"min": 0, "max": 7, "type": "Integer"},
             "rg10": {"min": 0, "max": 100, "type": "Real"},
@@ -84,8 +84,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             "net_energy": {"min": 0, "max": 20000, "type": "Integer"},
             "net_height": {"min": 0, "max": 15, "type": "Real"},
             "nrtrees": {"min": 0, "max": 10000, "type": "Integer"},
-            "dbhmean": {"min": 0, "max": 2, "type": "Real"},
-            "dbhstd": {"min": 0, "max": 1, "type": "Real"},
+            "dbhmean": {"min": 0, "max": 250, "type": "Integer"},
+            "dbhstd": {"min": 0, "max": 250, "type": "Integer"},
             "conif_perc": {"min": 0, "max": 100, "type": "Integer"}
         }
 
@@ -198,9 +198,9 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             out_of_range = 0
 
             if field.lower() in field_constraints:
-                min_val = field_constraints[field]["min"]
-                max_val = field_constraints[field]["max"]
-                expected_type = field_constraints[field]["type"]
+                min_val = field_constraints[field.lower()]["min"]
+                max_val = field_constraints[field.lower()]["max"]
+                expected_type = field_constraints[field.lower()]["type"]
                 
                 if not qgs_field.typeName().startswith(expected_type):
                     warnings.append(f"field type should be {expected_type} instead of {qgs_field.typeName()}")
@@ -208,11 +208,11 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 for feature in layer.getFeatures():
                     value = feature[field]
 
-                    if value is not None and (field.lower() != "rockdensity" and field.lower() != "rockdensit"):
+                    if value is not None and field.lower().startswith("rockdensit"):
                         if (min_val is not None and value < min_val) or (max_val is not None and value > max_val):
                             out_of_range +=1
                     
-                    if value is not None and (field.lower() == "rockdensity" or field.lower() == "rockdensit"):
+                    if value is not None and not field.lower().startswith("rockdensit"):
                         if (min_val is not None and value < min_val and value!=0) or (max_val is not None and value > max_val):
                             out_of_range +=1                                                  
                         
@@ -265,32 +265,33 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             }, context=context, feedback=feedback, is_child_algorithm=True)
             
             # check if rockdensity cells in the outer 2 rows
-            if (field.lower() == "rockdensity" or field.lower() == "rockdensit"):
+            if field.lower().startswith("rockdensit"):
                 rock_raster = QgsRasterLayer(out_path, "rockdensity")
                 if not rock_raster.isValid():
                     feedback.pushWarning(f"⚠️ WARNING: ROCKDENSITY raster is not valid and could not be loaded for edge check.")
                 else:
                     provider = rock_raster.dataProvider()
                     extent = rock_raster.extent()
-                    width = rock_raster.width()
-                    height = rock_raster.height()
-                    block = provider.block(1, extent, width, height)
+                    cols = rock_raster.width()
+                    rows = rock_raster.height()
+                    block = provider.block(1, extent, cols, rows)
 
-                    values = np.array([block.value(x, y) for y in range(height) for x in range(width)], dtype=float)
-                    values = values.reshape((height, width))
+                    # load full raster into numpy
+                    values = np.array([block.value(x, y) for x in range(rows) for y in range(cols)], dtype=int)
+                    values = values.reshape((rows, cols))
 
-                    # get outer 2 rows and columns
-                    edges = np.vstack((
-                        values[:2, :],        # upper 2 rows
-                        values[-2:, :],       # lower 2 rows
-                        values[:, :2].T,      # left 2 columns
-                        values[:, -2:].T      # right 2 columns
-                    ))
+                    # extraction of outer 2 rows + columns
+                    top = values[:2, :]  # top 2 rows
+                    bottom = values[-2:, :]  # bottom 2 rows
+                    left = values[:, :2]  # left 2 columns
+                    right = values[:, -2:]  # right 2 columns
+
+                    # flatten all edges into a 1D array
+                    edges = np.concatenate((top.ravel(), bottom.ravel(), left.ravel(), right.ravel()))
 
                     if np.any(edges > 0):
                         field_warnings.append(f"⚠️ WARNING: ROCKDENSITY raster contains values in the two outer rows or columns of the raster. Those will not be taken into account in the simulation!")
 
-            
             if load_layers:
                 rl = QgsRasterLayer(out_path, field)
                 if rl.isValid():
