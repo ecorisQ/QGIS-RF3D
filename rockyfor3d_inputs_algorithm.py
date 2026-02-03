@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Alexandra Erbach'
-__date__ = '2025-04-24'
+__date__ = '2026-06-03'
 __copyright__ = '(C) 2025 by ecorisQ'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -34,6 +34,7 @@ import os
 import inspect
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import QCoreApplication
+from pathlib import Path
 from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
@@ -86,7 +87,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             "nrtrees": {"min": 0, "max": 10000, "type": "Integer"},
             "dbhmean": {"min": 0, "max": 250, "type": "Integer"},
             "dbhstd": {"min": 0, "max": 250, "type": "Integer"},
-            "conif_perc": {"min": 0, "max": 100, "type": "Integer"}
+            "conif_perc": {"min": 0, "max": 100, "type": "Integer"},
+            "conif_percent": {"min": 0, "max": 100, "type": "Integer"}
         }
 
         # input layers
@@ -140,6 +142,9 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         # convert .tif DTM to .asc if necessary
         feedback.setCurrentStep(0)
         dtm_asc_path = os.path.join(output_folder, 'dem.asc')
+        
+        dtm_dir = Path(dtm_path).parent.resolve()
+        out_dir = Path(output_folder).resolve()
         if dtm_path.lower().endswith('.tif'):
             processing.run('gdal:translate', {
             'INPUT': dtm_path,
@@ -148,13 +153,15 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             }, context=context, feedback=feedback)
             feedback.pushInfo(f"DEM converted to ASCII format: {dtm_asc_path}")
         
-        elif dtm_path.lower().endswith('.asc') and os.path.dirname(dtm_path) != output_folder:
+        elif dtm_path.lower().endswith('.asc') and (dtm_dir != out_dir or os.path.basename(dtm_path) != 'dem.asc'):
             feedback.pushInfo(f"DEM is already in ASCII format; copied from {dtm_path} to {dtm_asc_path}")
             shutil.copy2(dtm_path, dtm_asc_path)
             
-        elif os.path.basename(dtm_path) != 'dem.asc':
-            os.rename(dtm_path, dtm_asc_path)
-            feedback.pushInfo(f"{dtm_path} renamed to {dtm_asc_path}")
+            # copy .prj if it exists
+            src_prj = os.path.splitext(dtm_path)[0] + ".prj"
+            dst_prj = os.path.splitext(dtm_asc_path)[0] + ".prj"
+            if os.path.exists(src_prj):
+                shutil.copy2(src_prj, dst_prj)
                 
         # iterate over fields
         for i, field in enumerate(fields):
@@ -208,11 +215,11 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 for feature in layer.getFeatures():
                     value = feature[field]
 
-                    if value is not None and field.lower().startswith("rockdensit"):
+                    if value is not None and not field.lower().startswith("rockdensit"):
                         if (min_val is not None and value < min_val) or (max_val is not None and value > max_val):
                             out_of_range +=1
                     
-                    if value is not None and not field.lower().startswith("rockdensit"):
+                    if value is not None and field.lower().startswith("rockdensit"):
                         if (min_val is not None and value < min_val and value!=0) or (max_val is not None and value > max_val):
                             out_of_range +=1                                                  
                         
@@ -253,9 +260,21 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             }, context=context, feedback=feedback, is_child_algorithm=True)
 
             # translate to .asc
-            out_path = os.path.join(output_folder, f"{field}.asc")
+            out_path = os.path.join(output_folder, f"{field.lower()}.asc")
             if field.lower() == "rockdensit":
                 out_path = os.path.join(output_folder, "rockdensity.asc")
+            if field.lower() =="conif_perc":
+                out_path = os.path.join(output_folder, "conif_percent.asc")
+            
+            if os.path.exists(out_path):
+                try:
+                    os.remove(out_path)
+                except PermissionError:
+                    feedback.reportError(
+                    f"⚠️ WARNING: Output file exists and could not be overwritten: {out_path}. Please close the raster in QGIS or check file permissions.",
+                    fatalError=False
+                    )
+            
             processing.run('gdal:translate', {
                 'DATA_TYPE': gdal_type+1,
                 'INPUT': warped['OUTPUT'],
