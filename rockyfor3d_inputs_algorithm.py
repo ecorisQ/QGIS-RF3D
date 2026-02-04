@@ -157,7 +157,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo(f"DEM is already in ASCII format; copied from {dtm_path} to {dtm_asc_path}")
             shutil.copy2(dtm_path, dtm_asc_path)
             
-            # copy .prj if it exists
+            # copy .prj as well if it exists
             src_prj = os.path.splitext(dtm_path)[0] + ".prj"
             dst_prj = os.path.splitext(dtm_asc_path)[0] + ".prj"
             if os.path.exists(src_prj):
@@ -287,7 +287,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             if field.lower().startswith("rockdensit"):
                 rock_raster = QgsRasterLayer(out_path, "rockdensity")
                 if not rock_raster.isValid():
-                    feedback.pushWarning(f"⚠️ WARNING: ROCKDENSITY raster is not valid and could not be loaded for edge check.")
+                    feedback.pushWarning(f"⚠️ WARNING: Rockdensity raster is not valid and could not be loaded for edge check.")
                 else:
                     provider = rock_raster.dataProvider()
                     extent = rock_raster.extent()
@@ -309,7 +309,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                     edges = np.concatenate((top.ravel(), bottom.ravel(), left.ravel(), right.ravel()))
 
                     if np.any(edges > 0):
-                        field_warnings.append(f"⚠️ WARNING: ROCKDENSITY raster contains values in the two outer rows or columns of the raster. Those will not be taken into account in the simulation!")
+                        field_warnings.append(f"⚠️ WARNING: Rockdensity raster contains values in the two outer rows or columns of the raster. Those will not be taken into account in the simulation!")
 
             if load_layers:
                 rl = QgsRasterLayer(out_path, field)
