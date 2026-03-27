@@ -55,6 +55,7 @@ import processing
 import os
 import shutil
 import numpy as np
+import xml.etree.ElementTree as ET
 
 
 class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
@@ -70,7 +71,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
     def processAlgorithm(self, parameters, context, model_feedback):
         feedback = QgsProcessingMultiStepFeedback((len(parameters['fields'])+1), model_feedback)
         results = {}
-        field_warnings = []
+        run_warnings = []
         nodata_value = -9999
 
         field_constraints = {
@@ -91,7 +92,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             "conif_percent": {"min": 0, "max": 100, "type": "Integer"}
         }
 
-        # input layers
+        # check if DTM ist valid
         dtm = self.parameterAsRasterLayer(parameters, 'dtm', context)
         if not dtm or not dtm.isValid():
             raise QgsProcessingException(f"❌ ERROR: DEM layer is not valid.")
@@ -99,7 +100,29 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             raise QgsProcessingException(f"❌ ERROR: The DEM has no valid coordinate reference system assigned - please fix that.")
         dtm_path = dtm.source()
         dtm_extent = dtm.extent()
+
+        # if DTM is .vrt, check if VRT is valid (all referenced source files exist)
+        if dtm_path.lower().endswith('.vrt'):
+            vrt_dir = os.path.dirname(os.path.abspath(dtm_path))
+            try:
+                tree = ET.parse(dtm_path)
+                root = tree.getroot()
+                missing_files = []
+                for source_filename in root.iter('SourceFilename'):
+                    ref_path = source_filename.text
+                    if ref_path:
+                        if not os.path.isabs(ref_path):
+                            ref_path = os.path.join(vrt_dir, ref_path)
+                        ref_path = os.path.normpath(ref_path)
+                        if not os.path.exists(ref_path):
+                            missing_files.append(ref_path)
+                if missing_files:
+                    missing_list = '\n'.join(missing_files)
+                    raise QgsProcessingException(f"❌ ERROR: VRT file references missing source file(s):\n{missing_list}")
+            except ET.ParseError as e:
+                raise QgsProcessingException(f"❌ ERROR: VRT file could not be parsed: {e}")
         
+        # check if vector layer is valid and not empty
         layer = self.parameterAsVectorLayer(parameters, 'poly', context)
         if not layer or not layer.isValid():
             raise QgsProcessingException(f"❌ ERROR: Input vector layer is not valid.")
@@ -107,13 +130,14 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         if layer.featureCount() < 1 or layer.featureCount() is None:
             raise QgsProcessingException(f"❌ ERROR: The vector layer is empty and contains no features. Please check your input data.")
      
+        #  check for invalid geometries in vector layer
         ids_invalid_geom = []
         for feature in layer.getFeatures():
             geom = feature.geometry()
             if not geom.isGeosValid():
                 ids_invalid_geom.append(str(feature.id()))
         if ids_invalid_geom:
-            feedback.pushWarning(f"❌ WARNING: Feature(s) ({', '.join(ids_invalid_geom)}) of vector layer with invalid geometry. Please verify if the output rasters are correct and otherwise fix your input data.")
+            run_warnings.append(f"⚠️ WARNING: Feature(s) ({', '.join(ids_invalid_geom)}) of vector layer with invalid geometry. Please verify if the output rasters are correct and otherwise fix your input data.")
 
         # fields
         fields = parameters['fields']
@@ -139,7 +163,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         if not vector_extent.intersects(dtm_extent):
             raise QgsProcessingException(f"❌ ERROR: The vector layer does not intersect with the extent of the DEM. Please check your input data.")
                 
-        # convert .tif DTM to .asc if necessary
+        # convert .tif/.vrt DTM to .asc if necessary
         feedback.setCurrentStep(0)
         dtm_asc_path = os.path.join(output_folder, 'dem.asc')
         
@@ -178,7 +202,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             elif qgs_field.typeName().lower().startswith('integer'):
                 gdal_type = 1 # Int16
             else:
-                feedback.pushInfo(f"Data type of field '{field}' could not be determined - please verify.")
+                run_warnings.append(f"⚠️ WARNING: Field '{field}' – data type could not be determined, Float32 is used - please verify.")
                 gdal_type = 5
                
              # check on NULL values and replace them with notdata_value
@@ -196,7 +220,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 }, context=context, feedback=feedback, is_child_algorithm=True)
                 
                 if null_count == total_count:
-                    field_warnings.append(f"⚠️ WARNING: Field '{field}' contains only NULL values and cannot be rasterized - please verify.")
+                    run_warnings.append(f"⚠️ WARNING: Field '{field}' contains only NULL values and cannot be rasterized - please verify.")
                     continue
                 else:
                     warnings.append(f"{null_count} NULL values were found")
@@ -227,7 +251,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                     warnings.append(f"{out_of_range} value(s) outside the expected range ({min_val}–{max_val})")
                 
             if warnings:
-                field_warnings.append(f"⚠️ WARNING: Field '{field}' – {', '.join(warnings)}. Please verify.")
+                run_warnings.append(f"⚠️ WARNING: Field '{field}' – {', '.join(warnings)}. Please verify.")
                     
              
             # rasterize field
@@ -270,10 +294,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 try:
                     os.remove(out_path)
                 except PermissionError:
-                    feedback.reportError(
-                    f"⚠️ WARNING: Output file exists and could not be overwritten: {out_path}. Please close the raster in QGIS or check file permissions.",
-                    fatalError=False
-                    )
+                    run_warnings.append(f"⚠️ WARNING: Output file exists and could not be overwritten: {out_path}. Please close the raster in QGIS or check file permissions.")
+                    continue
             
             processing.run('gdal:translate', {
                 'DATA_TYPE': gdal_type+1,
@@ -287,7 +309,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
             if field.lower().startswith("rockdensit"):
                 rock_raster = QgsRasterLayer(out_path, "rockdensity")
                 if not rock_raster.isValid():
-                    feedback.pushWarning(f"⚠️ WARNING: Rockdensity raster is not valid and could not be loaded for edge check.")
+                    run_warnings.append(f"⚠️ WARNING: Rockdensity raster is not valid and could not be loaded for edge check.")
                 else:
                     provider = rock_raster.dataProvider()
                     extent = rock_raster.extent()
@@ -309,7 +331,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                     edges = np.concatenate((top.ravel(), bottom.ravel(), left.ravel(), right.ravel()))
 
                     if np.any(edges > 0):
-                        field_warnings.append(f"⚠️ WARNING: Rockdensity raster contains values in the two outer rows or columns of the raster. Those will not be taken into account in the simulation!")
+                        run_warnings.append(f"⚠️ WARNING: Rockdensity raster contains values in the two outer rows or columns of the raster. Those will not be taken into account in the simulation!")
 
             if load_layers:
                 rl = QgsRasterLayer(out_path, field)
@@ -318,8 +340,8 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
 
             results[field] = out_path
             
-        if field_warnings:
-            for info in field_warnings:
+        if run_warnings:
+            for info in run_warnings:
                 feedback.pushWarning(info)
                 
         return results
