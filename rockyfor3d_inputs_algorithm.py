@@ -145,7 +145,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         
         dtm_dir = Path(dtm_path).parent.resolve()
         out_dir = Path(output_folder).resolve()
-        if dtm_path.lower().endswith('.tif') or dtm_path.lower()endswith('vrt'):
+        if dtm_path.lower().endswith('.tif') or dtm_path.lower().endswith('vrt'):
             processing.run('gdal:translate', {
             'INPUT': dtm_path,
             'NODATA': nodata_value,
