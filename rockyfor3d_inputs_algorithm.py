@@ -164,29 +164,35 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         if not vector_extent.intersects(dtm_extent):
             raise QgsProcessingException(f"❌ ERROR: The vector layer does not intersect with the extent of the DEM. Please check your input data.")
                 
-        # convert .tif/.vrt DTM to .asc if necessary
+        # copy/convert DTM to output folder
         feedback.setCurrentStep(0)
-        dtm_asc_path = os.path.join(output_folder, 'dem.asc')
-        
         dtm_dir = Path(dtm_path).parent.resolve()
         out_dir = Path(output_folder).resolve()
-        if dtm_path.lower().endswith('.tif') or dtm_path.lower().endswith('vrt'):
+
+        if dtm_path.lower().endswith('.vrt'):
+            dtm_out_path = os.path.join(output_folder, 'dem.tif')
             processing.run('gdal:translate', {
             'INPUT': dtm_path,
             'NODATA': nodata_value,
-            'OUTPUT': dtm_asc_path
+            'OUTPUT': dtm_out_path
             }, context=context, feedback=feedback)
-            feedback.pushInfo(f"DEM converted to ASCII format: {dtm_asc_path}")
-        
-        elif dtm_path.lower().endswith('.asc') and (dtm_dir != out_dir or os.path.basename(dtm_path) != 'dem.asc'):
-            feedback.pushInfo(f"DEM is already in ASCII format; copied from {dtm_path} to {dtm_asc_path}")
-            shutil.copy2(dtm_path, dtm_asc_path)
-            
-            # copy .prj as well if it exists
-            src_prj = os.path.splitext(dtm_path)[0] + ".prj"
-            dst_prj = os.path.splitext(dtm_asc_path)[0] + ".prj"
-            if os.path.exists(src_prj):
-                shutil.copy2(src_prj, dst_prj)
+            feedback.pushInfo(f"DEM converted from VRT to GeoTIFF: {dtm_out_path}")
+
+        else:
+            dtm_ext = os.path.splitext(dtm_path)[1].lower()
+            if dtm_ext not in ('.asc', '.tif', '.tiff'):
+                raise QgsProcessingException(f"❌ ERROR: DEM format '{dtm_ext}' is not supported by Rockyfor3D - please provide an .asc, .tif or .vrt file.")
+            dtm_out_path = os.path.join(output_folder, 'dem' + dtm_ext)
+
+            if dtm_dir != out_dir or os.path.basename(dtm_path) != os.path.basename(dtm_out_path):
+                feedback.pushInfo(f"DEM copied from {dtm_path} to {dtm_out_path}")
+                shutil.copy2(dtm_path, dtm_out_path)
+
+                if dtm_ext == '.asc':
+                    src_prj = os.path.splitext(dtm_path)[0] + ".prj"
+                    dst_prj = os.path.splitext(dtm_out_path)[0] + ".prj"
+                    if os.path.exists(src_prj):
+                        shutil.copy2(src_prj, dst_prj)
                 
         # iterate over fields
         for i, field in enumerate(fields):
