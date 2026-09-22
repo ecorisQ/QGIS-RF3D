@@ -262,7 +262,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 'WIDTH': dtm.rasterUnitsPerPixelX(),
                 'HEIGHT': dtm.rasterUnitsPerPixelY(),
                 'EXTENT': f"{dtm_extent.xMinimum()},{dtm_extent.xMaximum()},{dtm_extent.yMinimum()},{dtm_extent.yMaximum()}",
-                'DATA_TYPE': gdal_type,
+                'DATA_TYPE': 6,  # Float64
                 'NODATA': nodata_value,
                 'INIT': nodata_value,
                 'UNITS': 1,
