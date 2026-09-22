@@ -8,5 +8,5 @@ A geopackage **template for terrain / forest / rockfall nets data** can be downl
 The plugin ("Rockyfor3D Input Rasters") is available in the official QGIS Plugin repository and can be installed in QGIS via *Plugins > Manage and Install Plugins*.
 Once installed, the plugin is accessible in QGIS from the plugin menu, the processing toolbox or directly from the toolbar.
 
-### Get Rockyfor3D (free for ecorisQ members)
-https://www.ecorisq.org/ecorisq-tools
+### Get Rockyfor3D
+[https://www.natureanalytics.io/rockyfor3d/](https://www.natureanalytics.io/rockyfor3d/)
