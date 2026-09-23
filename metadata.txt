@@ -24,6 +24,7 @@ hasProcessingProvider=yes
 changelog=1.0
     - Added support for QGIS 4
     - DEM inputs as .tif are no longer converted to .asc
+    - Changed authorship (from ecorisQ to Nature Analytics)
 
 # Tags are comma separated with spaces allowed
 # tags=python, rockfall, Rockyfor3D, Nature Analytics
