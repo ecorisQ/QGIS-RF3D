@@ -1,0 +1,4 @@
+# Exclude dev-only build/tooling scripts from `git archive` (used by `make package`
+# and the plugins.qgis.org upload zip). Keeps the released plugin package pure Python.
+help/make.bat export-ignore
+scripts/ export-ignore
