@@ -57,6 +57,7 @@ import os
 import shutil
 import numpy as np
 import xml.etree.ElementTree as _StdET
+import xml.parsers.expat as _expat
 
 try:
     # Preferred: hardened parser against XXE / entity-expansion attacks
@@ -81,12 +82,21 @@ def _parse_xml_safely(path):
     def _reject(*args, **kwargs):
         raise EntitiesForbidden(f"DOCTYPE/entity declarations are not allowed in {path}")
 
-    parser = _StdET.XMLParser()
-    parser.parser.DoctypeDeclHandler = _reject
-    parser.parser.EntityDeclHandler = _reject
-    parser.parser.UnparsedEntityDeclHandler = _reject
-    parser.parser.ExternalEntityRefHandler = _reject
-    return _StdET.parse(path, parser=parser)
+    # Drive expat directly (as defusedxml does) instead of relying on the
+    # undocumented internal parser attribute of ET.XMLParser
+    target = _StdET.TreeBuilder()
+    parser = _expat.ParserCreate()
+    parser.StartElementHandler = target.start
+    parser.EndElementHandler = target.end
+    parser.CharacterDataHandler = target.data
+    parser.DoctypeDeclHandler = _reject
+    parser.EntityDeclHandler = _reject
+    parser.UnparsedEntityDeclHandler = _reject
+    parser.ExternalEntityRefHandler = _reject
+    with open(path, 'rb') as f:
+        parser.ParseFile(f)
+    return _StdET.ElementTree(target.close())
+
 
 
 class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
@@ -150,7 +160,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 if missing_files:
                     missing_list = '\n'.join(missing_files)
                     raise QgsProcessingException(f"❌ ERROR: VRT file references missing source file(s):\n{missing_list}")
-            except (ET.ParseError, EntitiesForbidden) as e:
+            except (ET.ParseError, EntitiesForbidden, _expat.ExpatError) as e:
                 raise QgsProcessingException(f"❌ ERROR: VRT file could not be parsed: {e}")
         
         # check if vector layer is valid and not empty
