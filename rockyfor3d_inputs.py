@@ -65,13 +65,13 @@ class Rockyfor3DInputRastersPlugin(object):
             QIcon(icon),
             u"Create Rockyfor3D Input Rasters", self.iface.mainWindow())
         self.action.triggered.connect(self.run)
-        self.iface.addPluginToMenu(u"&ecorisQ", self.action)
+        self.iface.addPluginToMenu(u"&Nature Analytics", self.action)
         self.iface.addToolBarIcon(self.action)
 
     def unload(self):
         QgsApplication.processingRegistry().removeProvider(self.provider)
-        self.iface.removePluginMenu(u"&ecorisQ", self.action)
+        self.iface.removePluginMenu(u"&Nature Analytics", self.action)
         self.iface.removeToolBarIcon(self.action)
 
     def run(self):
-        processing.execAlgorithmDialog("ecorisQ:rockyfor3Drasters")
+        processing.execAlgorithmDialog("nature_analytics:rockyfor3Drasters")

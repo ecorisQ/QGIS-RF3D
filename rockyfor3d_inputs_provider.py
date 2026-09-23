@@ -66,7 +66,7 @@ class Rockyfor3DInputRastersProvider(QgsProcessingProvider):
         string should be a unique, short, character only string, eg "qgis" or
         "gdal". This string should not be localised.
         """
-        return 'ecorisQ'
+        return 'nature_analytics'
 
     def name(self):
         """
@@ -75,7 +75,7 @@ class Rockyfor3DInputRastersProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return 'ecorisQ Tools'
+        return 'Nature Analytics Tools'
 
     def icon(self):
         cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
