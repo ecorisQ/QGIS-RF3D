@@ -61,6 +61,8 @@ import xml.parsers.expat as _expat
 
 try:
     # Preferred: hardened parser against XXE / entity-expansion attacks
+    import defusedxml
+    defusedxml.defuse_stdlib()  # also patches xml.etree.ElementTree (_StdET) in place
     from defusedxml import ElementTree as ET
     from defusedxml.common import EntitiesForbidden
     _HAS_DEFUSEDXML = True
@@ -89,7 +91,7 @@ def _parse_xml_safely(path):
     parser.StartElementHandler = target.start
     parser.EndElementHandler = target.end
     parser.CharacterDataHandler = target.data
-    parser.DoctypeDeclHandler = _reject
+    parser.StartDoctypeDeclHandler = _reject
     parser.EntityDeclHandler = _reject
     parser.UnparsedEntityDeclHandler = _reject
     parser.ExternalEntityRefHandler = _reject
