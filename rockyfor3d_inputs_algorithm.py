@@ -56,19 +56,20 @@ import processing
 import os
 import shutil
 import numpy as np
-import xml.etree.ElementTree as _StdET
-import xml.parsers.expat as _expat
 
 try:
     # Preferred: hardened parser against XXE / entity-expansion attacks
-    import defusedxml
-    defusedxml.defuse_stdlib()  # also patches xml.etree.ElementTree (_StdET) in place
+    from defusedxml import defuse_stdlib
+    defuse_stdlib()
     from defusedxml import ElementTree as ET
     from defusedxml.common import EntitiesForbidden
     _HAS_DEFUSEDXML = True
 except ImportError:
     # defusedxml not installed in this QGIS Python env; fall back to a
-    # manually hardened stdlib parser that rejects DOCTYPE/entity declarations
+    # manually hardened stdlib parser that rejects DOCTYPE/entity declarations.
+    # nosec: never used for unguarded parsing, see _parse_xml_safely() below
+    import xml.etree.ElementTree as _StdET  # nosec B405
+    import xml.parsers.expat as _expat  # nosec B413
     ET = _StdET
     _HAS_DEFUSEDXML = False
 
