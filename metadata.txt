@@ -12,7 +12,7 @@ version=1.0
 author=Alexandra Erbach
 email=a.erbach@posteo.ch
 
-about=Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), the algorithm rasterizes the attributes from the vector layer, ensuring alignment of all output rasters with the DEM grid, and the correct output format of all data (ASCII grid). The tool includes internal checks for invalid or missing geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model.
+about=Based on a digital elevation model (DEM) and a polygon or line input (terrain / forest / rockfall nets), the algorithm rasterizes the attributes from the vector layer, ensuring alignment of all output rasters with the DEM grid, and the correct output format of all data. The tool includes internal checks for invalid or missing geometries, mismatched coordinate reference systems (CRS), and missing values. In addition, attributes are validated against predefined type and value constraints that reflect the expectations of the Rockyfor3D model.
 
 tracker=https://github.com/nature-analytics/QGIS-RF3D/issues
 repository=https://github.com/nature-analytics/QGIS-RF3D
