@@ -56,11 +56,9 @@ import processing
 import os
 import shutil
 import numpy as np
-try:
-    # Mitigate XML vulnerabilities (XXE, entity expansion) when parsing VRT files
-    from defusedxml import ElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+# Mitigate XML vulnerabilities (XXE, entity expansion) when parsing VRT files
+from defusedxml import ElementTree as ET
+from defusedxml.common import EntitiesForbidden
 
 
 class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
@@ -124,7 +122,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
                 if missing_files:
                     missing_list = '\n'.join(missing_files)
                     raise QgsProcessingException(f"❌ ERROR: VRT file references missing source file(s):\n{missing_list}")
-            except ET.ParseError as e:
+            except (ET.ParseError, EntitiesForbidden) as e:
                 raise QgsProcessingException(f"❌ ERROR: VRT file could not be parsed: {e}")
         
         # check if vector layer is valid and not empty
