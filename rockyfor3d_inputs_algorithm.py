@@ -56,7 +56,11 @@ import processing
 import os
 import shutil
 import numpy as np
-import xml.etree.ElementTree as ET
+try:
+    # Mitigate XML vulnerabilities (XXE, entity expansion) when parsing VRT files
+    from defusedxml import ElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 
 class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):

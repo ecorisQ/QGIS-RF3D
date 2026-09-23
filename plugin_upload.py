@@ -10,6 +10,13 @@ import getpass
 import xmlrpc.client
 from optparse import OptionParser
 
+try:
+    # Mitigate XML vulnerabilities (XXE, entity expansion) in xmlrpc.client
+    from defusedxml import xmlrpc as defused_xmlrpc
+    defused_xmlrpc.monkey_patch()
+except ImportError:
+    pass
+
 standard_library.install_aliases()
 
 # Configuration
