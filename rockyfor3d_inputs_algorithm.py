@@ -56,9 +56,37 @@ import processing
 import os
 import shutil
 import numpy as np
-# Mitigate XML vulnerabilities (XXE, entity expansion) when parsing VRT files
-from defusedxml import ElementTree as ET
-from defusedxml.common import EntitiesForbidden
+import xml.etree.ElementTree as _StdET
+
+try:
+    # Preferred: hardened parser against XXE / entity-expansion attacks
+    from defusedxml import ElementTree as ET
+    from defusedxml.common import EntitiesForbidden
+    _HAS_DEFUSEDXML = True
+except ImportError:
+    # defusedxml not installed in this QGIS Python env; fall back to a
+    # manually hardened stdlib parser that rejects DOCTYPE/entity declarations
+    ET = _StdET
+    _HAS_DEFUSEDXML = False
+
+    class EntitiesForbidden(Exception):
+        pass
+
+
+def _parse_xml_safely(path):
+    """Parse XML from an untrusted source, blocking XXE and entity-expansion attacks."""
+    if _HAS_DEFUSEDXML:
+        return ET.parse(path)
+
+    def _reject(*args, **kwargs):
+        raise EntitiesForbidden(f"DOCTYPE/entity declarations are not allowed in {path}")
+
+    parser = _StdET.XMLParser()
+    parser.parser.DoctypeDeclHandler = _reject
+    parser.parser.EntityDeclHandler = _reject
+    parser.parser.UnparsedEntityDeclHandler = _reject
+    parser.parser.ExternalEntityRefHandler = _reject
+    return _StdET.parse(path, parser=parser)
 
 
 class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
@@ -108,7 +136,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
         if dtm_path.lower().endswith('.vrt'):
             vrt_dir = os.path.dirname(os.path.abspath(dtm_path))
             try:
-                tree = ET.parse(dtm_path)
+                tree = _parse_xml_safely(dtm_path)
                 root = tree.getroot()
                 missing_files = []
                 for source_filename in root.iter('SourceFilename'):
