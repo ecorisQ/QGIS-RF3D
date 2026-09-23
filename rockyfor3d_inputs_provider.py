@@ -79,7 +79,7 @@ class Rockyfor3DInputRastersProvider(QgsProcessingProvider):
 
     def icon(self):
         cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-        icon = QIcon(os.path.join(os.path.join(cmd_folder, 'Logo_IEA_Q.png')))
+        icon = QIcon(os.path.join(os.path.join(cmd_folder, 'icon_na.png')))
         return icon
 
     def longName(self):

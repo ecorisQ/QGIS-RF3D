@@ -21,15 +21,16 @@ repository=https://github.com/nature-analytics/QGIS-RF3D
 # Recommended items:
 
 hasProcessingProvider=yes
-# Uncomment the following line and add your changelog:
-# changelog=
+changelog=1.0
+    - Added support for QGIS 4
+    - DEM inputs as .tif are no longer converted to .asc
 
 # Tags are comma separated with spaces allowed
 # tags=python, rockfall, Rockyfor3D, Nature Analytics
 
 homepage=https://github.com/nature-analytics/QGIS-RF3D
 # category=Plugins
-icon=Logo_ecorisQ_with_URL.png
+icon=logo_na.png
 # experimental flag
 experimental=False
 

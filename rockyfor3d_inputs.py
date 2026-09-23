@@ -60,7 +60,7 @@ class Rockyfor3DInputRastersPlugin(object):
     def initGui(self):
         self.initProcessing()
         
-        icon = os.path.join(os.path.join(cmd_folder, 'Logo_IEA_Q.png'))
+        icon = os.path.join(os.path.join(cmd_folder, 'icon_na.png'))
         self.action = QAction(
             QIcon(icon),
             u"Create Rockyfor3D Input Rasters", self.iface.mainWindow())
