@@ -106,7 +106,7 @@ class Rockyfor3DInputRastersAlgorithm(QgsProcessingAlgorithm):
 
 
     def initAlgorithm(self, config=None):
-        self.addParameter(QgsProcessingParameterRasterLayer('dtm', 'Digital Elevation Model DEM (will be copied to destination folder and converted to .asc if necessary)'))
+        self.addParameter(QgsProcessingParameterRasterLayer('dtm', 'Digital Elevation Model DEM (will be copied to destination folder)'))
         self.addParameter(QgsProcessingParameterVectorLayer('poly', 'Input Vector Data', types=[Qgis.ProcessingSourceType.VectorPolygon, Qgis.ProcessingSourceType.VectorLine]))
         self.addParameter(QgsProcessingParameterField('fields', 'Attributes for rasterization (default: all numeric fields except the ID field)', parentLayerParameterName='poly', allowMultiple=True, type=Qgis.ProcessingFieldParameterDataType.Numeric, defaultToAllFields=True))
         self.addParameter(QgsProcessingParameterFile('output_path', 'Destination folder (will be created if not existent)', behavior=Qgis.ProcessingFileParameterBehavior.Folder, defaultValue=os.path.dirname(QgsProject.instance().fileName())))
